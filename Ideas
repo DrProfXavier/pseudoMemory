@@ -1,0 +1,14 @@
+from free list,
+    remove node
+    reassign pointer to free node to a new Data node
+    new data node points to the following node, free or Data holding
+    effectively one list
+    only have to print a single list
+how?
+    addProgram()?
+        find best/worst fit with outside method
+        Once nodes are found, redirect the free memory node pointers    
+         to/from new data holding node
+        Iterate trough based on pages needed (based on parameter)
+        Done?
+    Reverse is done for deleting programs  
