@@ -24,13 +24,14 @@ class list
 	void deleteProgram(string value);
 	node* findInsert(int size, string fit/*, string fit*/); //goes in addProgram
 	int fragments();
+	bool existence(string value);
 	
 	list()//constructor
 	{
 		head=NULL;//make head and tail point to null, an empty list 
 		tail=NULL;
 	}
-} /*freeList,*/ programList;
+}programList;
 
 void list::display()
 {
@@ -56,9 +57,7 @@ void list::createnode(string value)
 	node *temp = new node; //hold onto your hats
 	temp->data=value;//address that temp points to(the new node) will have its "data" attribute from "struct node" set to param value 
 	temp->next=NULL;
-	/*same goes for the pointer, assign temp's destination address to 
-	 * next, the node's pointer, becasue it is the tail, points to null,
-	 */ 
+	
 	if(head==NULL) //list is empty 
 	{
 		head = temp;//swap, reset temp
@@ -78,8 +77,7 @@ void list::addProgram(string value, int size, string fit) /*, string fit*/	//Tra
 	int remainder = 0;
 	if ((size % 4) > 0) {remainder = 1;}
 	pages = (size/4) + remainder;
-	node* temp = programList.findInsert(pages, fit);//,fit
-	//node* temp = head;
+	node* temp = programList.findInsert(pages, fit);
 	
 	for (int i = 0; i < pages; i++)
 	{
@@ -90,125 +88,129 @@ void list::addProgram(string value, int size, string fit) /*, string fit*/	//Tra
 
 node* list::findInsert(int size, string fit)/*, string fit*/		//will return a pointer to open location
 {
-	node* spot = new node;//should point to beginning of chosen frag
-	node* temp = head;//itereator start
-	node* nodeArr[32];//array with number
+	node* iter = head;
+	//node* current = NULL;
+	node* temp = NULL;
+	node* spot = NULL;
 	
-	int spaceNeeded = size;
-	int possibleSpaces = programList.fragments();//number of fragments
-	int spacesArr[possibleSpaces] = {0};//array of fragments
-	int spaceSize = 0;
-	int targetSize;
-
-
+	int requiredPages = size;
+	int spaceCount;
+	int potential;
+	int max = 33;
+	int min = 0;
+	
+	bool inFrag = false;
 	bool bestFit = false;
 	bool worstFit = false;
-	bool inFrag = false;
-
-	//best or worst fit
-	if (!fit.compare("best")) { 
+	
+	//determine fit method
+	if (!fit.compare("best")) 
+	{ 
 		bestFit = true;
 		worstFit = false;
 	}
-	else {
+	else 
+	{
 		bestFit = false;
 		worstFit = true;
 	}
 	
-	//fill "node* nodeArr" with each node
-	for (int count=0; count<32; count++)
+	//for BESTFIT
+	while (bestFit)
 	{
-		nodeArr[count] = temp;
-		temp = temp->next;
-	}
-
-    //will fill spacesArr with fragment sizes
-	int j = 1;//index of spacesArr
-	while (j <= possibleSpaces) //while indexs < size of spacesArr
-	{
-		for (int i = 0; i < 32; i++)//temp->next
+		for (int i = 0; i < 32; i++)
 		{
-			if (!inFrag && nodeArr[i]->data == "Free")
+			if (!inFrag && iter->data == "Free")
 			{
 				inFrag = true;
-				spaceSize++;
-			} 
-			if (inFrag && nodeArr[i]->data =="Free")
+				temp = iter;
+				spaceCount++;
+				iter = iter->next;
+			}
+			if (inFrag && iter->data == "Free")
 			{
-				spaceSize++;
-			} 
-			if (nodeArr[i]->data != "Free")
+				spaceCount++;
+				iter=iter->next;
+			}
+			if ((iter->data == "Free") && (iter->next == NULL))
 			{
 				inFrag = false;
-				if (spaceSize > 0)
+				spaceCount++;
+				if ((spaceCount < max) && (spaceCount > requiredPages))
 				{
-					spacesArr[j] = spaceSize;
-					spaceSize = 0;
+					potential = spaceCount;
+					max = potential;
+					spot = temp;
 				}
+				spaceCount = 0;
+				break;
 			}
-			j++;
-		}
-	}
-
-	//depending on fit method
-	if (bestFit) 
-	{
-		int min = 0;
-		for(int i=0; i<possibleSpaces; i++)
-		{
-			if((spacesArr[i]<min) && (spacesArr[i]>spaceNeeded))
+			if ((iter->data != "Free") || (iter->next == NULL))
 			{
-				min = spacesArr[i];
+				inFrag = false;
+				if ((spaceCount < max) && (spaceCount > requiredPages))
+				{
+					potential = spaceCount;
+					max = potential;
+					spot = temp;
+				}
+				spaceCount = 0;
+				iter = iter->next;
 			}
 		}
-		targetSize = min;
+		break;
 	}
 	
-	if (worstFit) 
+	//WORST OF ALL
+	while (worstFit)
 	{
-		int max = 0;
-		for(int i=0; i<possibleSpaces; i++)
+		for (int i = 0; i < 32; i++)//(int i = 0; i < 6; i++)
 		{
-			if((spacesArr[i]>max) && (spacesArr[i]>spaceNeeded))
-			{
-				max = spacesArr[i];
-			}
-		}
-		targetSize = max;
-	}
-	 
-	/*find the matching fragment space based on best or worst fit.
-	 * Once the copmleted fragment is found, return [index-spaceSize]
-	 * as start point "spot"
-	 */
-	int fragIndex = 1; //wtf is space??
-	while (fragIndex <= possibleSpaces) 
-	{
-		for (int i = 0; i < 32; i++)//temp->next
-		{
-			if (!inFrag && nodeArr[i]->data == "Free")
+			if (!inFrag && iter->data == "Free")
 			{
 				inFrag = true;
-				spaceSize++;
-			} 
-			else if (inFrag && nodeArr[i]->data =="Free")
+				temp = iter;
+				spaceCount++;
+				iter = iter->next;
+			}
+			if (inFrag && iter->data == "Free")
 			{
-				spaceSize++;
-			} 
-			else if (nodeArr[i]->data != "Free")
+				spaceCount++;
+				iter=iter->next;
+			}
+			if ((iter->data == "Free") && (iter->next == NULL))
 			{
 				inFrag = false;
-				fragIndex++;
-				if (spaceSize == targetSize)
+				spaceCount++;
+				if ((spaceCount > min) && (spaceCount > requiredPages))
 				{
-					spot = nodeArr[i - spaceSize -1];
-					break;
+					potential = spaceCount;
+					min = potential;
+					spot = temp;
 				}
-				spaceSize = 0;
+				spaceCount = 0;
+				break;
+			}
+			if ((iter->data != "Free") || (iter->next == NULL))
+			{
+				inFrag = false;
+				if ((spaceCount < max) && (spaceCount > requiredPages))
+				{
+					potential = spaceCount;
+					max = potential;
+					spot = temp;
+				}
+				spaceCount = 0;
+				iter = iter->next;
 			}
 		}
+		break;
 	}
 	
+	if	(size > max) 
+	{
+		cout<<"Error, Not enough memory for Program ";
+	}
 
 	return spot;
 }
@@ -250,6 +252,22 @@ void list::deleteProgram(string value) //prototype for iterator
 	}
 }
 
+bool existence(string value)
+{
+	node* check = programList.head;
+	bool exists = false;
+	
+	while (check->next)
+	{
+		if (check->data == value)
+		{
+			exists = true;
+		} 
+		else {exists = false;}
+	}
+	return exists;
+}
+
 
 int printMenu()
 {
@@ -270,18 +288,32 @@ int main(int argc, char ** argv)
 	bool isWorking = true;
 	int size;
 	string name;
-	//create 32 FREE pages in empty list
-	int count = 0;
-	string fit = "best";//FOR TESTING, CHANGE TO CHECK ARGS
+	string fit;
 	
-	while (count < 32) {
-	programList.createnode("Free");//freeList.createnode("Free");
-	count++;
+	if (argv[1] != NULL) 
+	{
+		string fit = argv[1];
+		if (fit.compare("best") == 0)
+		{
+			fit = "best";
+		}
+		if	(fit.compare("worst") == 0) 
+		{
+			fit = "worst";
+		}
+	}
+	
+	//Make starting empt list
+	int count = 0;	
+	while (count < 32) 
+	{
+		programList.createnode("Free");//freeList.createnode("Free");
+		count++;
 	}
 	
 	//Debugging, prints well
 	cout << endl;
-	cout << "Using best fit algorithm\n" <<endl;
+	cout << "Using "<<fit<<" fit algorithm\n" <<endl;
 	
 	while (isWorking)
 	{
@@ -296,7 +328,14 @@ int main(int argc, char ** argv)
 				cout<<"Program size (KB) - ";
 				cin>>size;
 				cout<<endl;
-				programList.addProgram(name, size, fit);//, fit
+				if (existence(name))
+				{
+					cout<<"Error, Program "<<name<<" already running.\n\n";
+					
+				}
+				else{
+					programList.addProgram(name, size, fit);//, fit
+				}
 				break;
 			case 2://works
 				cout<<"Program name - ";
