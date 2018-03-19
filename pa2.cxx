@@ -89,7 +89,6 @@ void list::addProgram(string value, int size, string fit) /*, string fit*/	//Tra
 node* list::findInsert(int size, string fit)/*, string fit*/		//will return a pointer to open location
 {
 	node* iter = head;
-	//node* current = NULL;
 	node* temp = NULL;
 	node* spot = NULL;
 	
@@ -100,9 +99,16 @@ node* list::findInsert(int size, string fit)/*, string fit*/		//will return a po
 	int min = 0;
 	
 	bool inFrag = false;
-	bool bestFit = false;
+	bool bestFit = true;
 	bool worstFit = false;
 	
+	/*for (int i = 0; i < requiredPages; i++)
+	{
+		iter->data = "value";
+		iter = iter->next;
+	}
+	iter = head;*/
+
 	//determine fit method
 	if (!fit.compare("best")) 
 	{ 
@@ -116,18 +122,19 @@ node* list::findInsert(int size, string fit)/*, string fit*/		//will return a po
 	}
 	
 	//for BESTFIT
-	while (bestFit)
+
+	if (bestFit)
 	{
-		for (int i = 0; i < 32; i++)
+		while (iter->next) //int i = 0; i < 6; i++
 		{
-			if (!inFrag && iter->data == "Free")
+			if (!inFrag && (iter->data == "Free"))
 			{
 				inFrag = true;
 				temp = iter;
 				spaceCount++;
 				iter = iter->next;
 			}
-			if (inFrag && iter->data == "Free")
+			if (inFrag && (iter->data == "Free"))
 			{
 				spaceCount++;
 				iter=iter->next;
@@ -136,33 +143,36 @@ node* list::findInsert(int size, string fit)/*, string fit*/		//will return a po
 			{
 				inFrag = false;
 				spaceCount++;
-				if ((spaceCount < max) && (spaceCount > requiredPages))
+				if ((spaceCount < max) && (spaceCount >= requiredPages))
 				{
 					potential = spaceCount;
 					max = potential;
 					spot = temp;
 				}
 				spaceCount = 0;
-				break;
+				return spot;
 			}
-			if ((iter->data != "Free") || (iter->next == NULL))
+			if ((iter->data != "Free") && (iter->next == NULL))
 			{
 				inFrag = false;
-				if ((spaceCount < max) && (spaceCount > requiredPages))
+				if ((spaceCount < max) && (spaceCount >= requiredPages))
 				{
 					potential = spaceCount;
 					max = potential;
 					spot = temp;
 				}
 				spaceCount = 0;
-				iter = iter->next;
+				return spot;
+			}
+			if (!inFrag && (iter->data != "Free"))
+			{
+			    iter = iter->next;
 			}
 		}
-		break;
 	}
 	
 	//WORST OF ALL
-	while (worstFit)
+	/*if (worstFit)
 	{
 		for (int i = 0; i < 32; i++)//(int i = 0; i < 6; i++)
 		{
@@ -182,35 +192,29 @@ node* list::findInsert(int size, string fit)/*, string fit*/		//will return a po
 			{
 				inFrag = false;
 				spaceCount++;
-				if ((spaceCount > min) && (spaceCount > requiredPages))
+				if ((spaceCount > min) && (spaceCount >= requiredPages))
 				{
 					potential = spaceCount;
 					min = potential;
 					spot = temp;
 				}
 				spaceCount = 0;
-				break;
+				//return spot;
 			}
 			if ((iter->data != "Free") || (iter->next == NULL))
 			{
 				inFrag = false;
-				if ((spaceCount < max) && (spaceCount > requiredPages))
+				if ((spaceCount > max) && (spaceCount >= requiredPages))
 				{
 					potential = spaceCount;
-					max = potential;
+					min = potential;
 					spot = temp;
 				}
 				spaceCount = 0;
-				iter = iter->next;
+				//return spot;
 			}
 		}
-		break;
-	}
-	
-	if	(size > max) 
-	{
-		cout<<"Error, Not enough memory for Program ";
-	}
+	}*/
 
 	return spot;
 }
@@ -252,9 +256,9 @@ void list::deleteProgram(string value) //prototype for iterator
 	}
 }
 
-bool existence(string value)
+bool list::existence(string value)
 {
-	node* check = programList.head;
+	node* check = head;
 	bool exists = false;
 	
 	while (check->next)
@@ -262,6 +266,7 @@ bool existence(string value)
 		if (check->data == value)
 		{
 			exists = true;
+			return exists;
 		} 
 		else {exists = false;}
 	}
@@ -283,26 +288,30 @@ int printMenu()
 	return choice;
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char** argv)
 {
 	bool isWorking = true;
 	int size;
 	string name;
-	string fit;
+	/*string fit = "meh";
 	
 	if (argv[1] != NULL) 
 	{
-		string fit = argv[1];
-		if (fit.compare("best") == 0)
+		fit = argv[1];
+		if (fit.compare("best") == 0 )
+		{
+			fit = "best";
+		} 
+		if (fit.compare("worst") == 0) 
+		{
+		  fit = "worst";
+		}
+		else 
 		{
 			fit = "best";
 		}
-		if	(fit.compare("worst") == 0) 
-		{
-			fit = "worst";
-		}
-	}
-	
+	}*/
+
 	//Make starting empt list
 	int count = 0;	
 	while (count < 32) 
@@ -310,10 +319,10 @@ int main(int argc, char ** argv)
 		programList.createnode("Free");//freeList.createnode("Free");
 		count++;
 	}
-	
+
 	//Debugging, prints well
 	cout << endl;
-	cout << "Using "<<fit<<" fit algorithm\n" <<endl;
+	cout << "Using "<<"best"/*argv[1]*/<<" fit algorithm\n" <<endl;
 	
 	while (isWorking)
 	{
@@ -328,16 +337,9 @@ int main(int argc, char ** argv)
 				cout<<"Program size (KB) - ";
 				cin>>size;
 				cout<<endl;
-				if (existence(name))
-				{
-					cout<<"Error, Program "<<name<<" already running.\n\n";
-					
-				}
-				else{
-					programList.addProgram(name, size, fit);//, fit
-				}
+				programList.addProgram(name, size, "best"/*argv[1]*/);//, fit
 				break;
-			case 2://works
+			case 2:	//works
 				cout<<"Program name - ";
 				cin>>name;
 				cout<<endl;
